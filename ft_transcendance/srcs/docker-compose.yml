@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+
+    # Nginx
+    nginx:
+        container_name: nginx
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        restart: always
+        ports:
+            - '8080:80'
+        depends_on:
+            - frontend
+            - backend
+        volumes:
+            - './nginx/conf.d/nginx.conf:/etc/nginx/conf.d/default.conf'
+            - './frontend/dist:/var/www/html'
+        networks:
+            - trantran
+
+    # VueJs - NodeJs
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        container_name: frontend
+        depends_on:
+            - backend
+        env_file: 
+            - ./frontend/src/.env
+        ports:
+            - 5173:5173
+        volumes:
+            - ./frontend:/app
+            - 'frontend_modules:/app/node_modules'
+        networks:
+            - trantran
+
+    backend:
+        #image: 
+        container_name: backend
+        restart: always
+        build:
+            context: ./backend
+            #dockerfile: Dockerfile
+        depends_on:
+        - db
+        env_file: 
+        - ./backend/.env
+        #tty: true
+        expose: 
+        - '3000'
+        networks:
+        - trantran
+    
+    #Postgresql database
+    db:
+        image:  postgres:15.1-alpine
+        container_name: db
+        env_file: 
+            - ./backend/.env
+        restart: always
+        #tty: true
+        volumes:
+            - 'database:/var/lib/postgresql/data'
+            - ./backend:/app
+        networks:
+            - trantran
+# Volumes
+volumes:
+    database:
+    frontend:
+    frontend_modules:
+
+# Networks
+networks:
+  trantran: {}
